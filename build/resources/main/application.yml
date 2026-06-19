@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+# MyBatis — mapper XML 위치 (생성된 @Mapper 인터페이스의 namespace 와 바인딩)
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+sap:
+  odata:
+    # SAP OData v4 서비스 base URL (코드 생성 시 사용한 URL과 동일하게)
+    base-url: ${SAP_ODATA_URL:http://localhost:8081/sap/odata/v4/SERVICE}
+    username: ${SAP_ODATA_USER:}
+    password: ${SAP_ODATA_PASS:}

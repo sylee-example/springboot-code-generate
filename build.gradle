@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.5'
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient
+
+    // MyBatis
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // === 코드 생성 전용 ===
+    // Apache Olingo OData v4 client — $metadata(EDMX) 파싱
+    implementation 'org.apache.olingo:odata-client-core:4.10.0'
+    implementation 'org.apache.olingo:odata-client-api:4.10.0'
+    // JavaPoet — 타입 안전 Java 코드 생성
+    implementation 'com.squareup:javapoet:1.13.0'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// === OData 코드젠 실행 task ===
+// 사용: ./gradlew genOData --args="https://host/sap/odata/v4/SERVICE"
+tasks.register('genOData', JavaExec) {
+    group = 'codegen'
+    description 'OData $metadata 읽어 DTO/Service/Controller 생성'
+    mainClass = 'com.example.odata.codegen.ODataGenerator'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+// === MyBatis 코드젠 실행 task ===
+// 사용: ./gradlew genMybatis --args="src/main/resources/mapper"
+tasks.register('genMybatis', JavaExec) {
+    group = 'codegen'
+    description 'MyBatis mapper XML 읽어 Mapper/DTO/Service/Controller 생성'
+    mainClass = 'com.example.odata.codegen.mybatis.MybatisGenerator'
+    classpath = sourceSets.main.runtimeClasspath
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.odata.generated.mapper.UserMapper">
+
+    <resultMap id="userResultMap" type="com.example.odata.generated.dto.UserResponse">
+        <id column="USER_ID" property="userId" javaType="java.lang.Long"/>
+        <result column="USER_NAME" property="userName" javaType="java.lang.String"/>
+        <result column="EMAIL" property="email" javaType="string"/>
+        <result column="AGE" property="age" javaType="int"/>
+        <result column="CREATED_AT" property="createdAt" javaType="java.time.LocalDateTime"/>
+    </resultMap>
+
+    <!-- resultMap → Response DTO 생성, 단건(byId) -->
+    <select id="selectUserById" parameterType="long" resultMap="userResultMap">
+        SELECT * FROM USERS WHERE USER_ID = #{userId}
+    </select>
+
+    <!-- resultMap → List -->
+    <select id="selectUserList" resultMap="userResultMap">
+        SELECT * FROM USERS ORDER BY USER_ID
+    </select>
+
+    <!-- resultType 스칼라 → 단건 Long -->
+    <select id="countUsers" resultType="long">
+        SELECT COUNT(*) FROM USERS
+    </select>
+
+    <!-- parameterType 없음 + 다중 #{} → Request DTO 생성 -->
+    <insert id="insertUser">
+        INSERT INTO USERS (USER_NAME, EMAIL, AGE)
+        VALUES (#{userName}, #{email}, #{age})
+    </insert>
+
+    <!-- parameterType FQCN → 기존 클래스 재사용 -->
+    <update id="updateUser" parameterType="com.example.odata.generated.dto.UserResponse">
+        UPDATE USERS SET USER_NAME = #{userName} WHERE USER_ID = #{userId}
+    </update>
+
+    <!-- 스칼라 단일 파라미터 -->
+    <delete id="deleteUser" parameterType="long">
+        DELETE FROM USERS WHERE USER_ID = #{userId}
+    </delete>
+
+</mapper>
