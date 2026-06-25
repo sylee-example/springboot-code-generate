@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.odata.generated.mapper.DynamicMapper">
+
+    <resultMap id="dynamicResultMap" type="com.example.odata.generated.dto.DynamicResponse">
+        <id column="ID" property="id" javaType="java.lang.Long"/>
+        <result column="NAME" property="name" javaType="string"/>
+        <result column="STATUS" property="status" javaType="string"/>
+    </resultMap>
+
+    <!-- 공통 WHERE 조각 — include 로 재사용 -->
+    <sql id="searchWhere">
+        <where>
+            <if test="keyword != null"> AND NAME LIKE #{keyword}</if>
+            <if test="ownerId != null"> AND OWNER_ID = #{ownerId}</if>
+        </where>
+    </sql>
+
+    <!-- include 안의 파라미터(keyword, ownerId)가 잡혀야 한다 -->
+    <select id="searchDynamic" resultMap="dynamicResultMap">
+        SELECT * FROM DYN
+        <include refid="searchWhere"/>
+        ORDER BY ID
+    </select>
+
+    <!-- choose/when + if: 인라인 동적 파라미터 -->
+    <select id="chooseDynamic" resultMap="dynamicResultMap">
+        SELECT * FROM DYN
+        <where>
+            <choose>
+                <when test="status != null"> AND STATUS = #{status}</when>
+                <otherwise> AND STATUS = 'ALL'</otherwise>
+            </choose>
+            <if test="minAge != null"> AND AGE &gt;= #{minAge}</if>
+        </where>
+    </select>
+
+    <!-- foreach: 실제 파라미터는 collection(ids), 루프변수(id)는 제외돼야 한다 -->
+    <select id="inDynamic" resultMap="dynamicResultMap">
+        SELECT * FROM DYN WHERE ID IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        AND STATUS = #{status}
+    </select>
+
+</mapper>

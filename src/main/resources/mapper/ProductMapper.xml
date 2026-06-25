@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.odata.generated.mapper.ProductMapper">
+
+    <resultMap id="productResultMap" type="com.example.odata.generated.dto.ProductResponse">
+        <id column="PRODUCT_ID" property="productId" javaType="java.lang.Long"/>
+        <result column="PRODUCT_NAME" property="productName" javaType="string"/>
+        <result column="CATEGORY" property="category" javaType="string"/>
+        <result column="PRICE" property="price" javaType="java.math.BigDecimal"/>
+        <result column="STATUS" property="status" javaType="string"/>
+    </resultMap>
+
+    <!-- 공통 검색 조건 — include 로 재사용 (동적 SQL 조각) -->
+    <sql id="searchConditions">
+        <where>
+            <if test="keyword != null"> AND PRODUCT_NAME LIKE #{keyword}</if>
+            <if test="category != null"> AND CATEGORY = #{category}</if>
+            <if test="minPrice != null"> AND PRICE &gt;= #{minPrice}</if>
+        </where>
+    </sql>
+
+    <!-- include + if: 검색 파라미터 전부 Request DTO 로 묶임 -->
+    <select id="searchProducts" resultMap="productResultMap">
+        SELECT * FROM PRODUCTS
+        <include refid="searchConditions"/>
+        ORDER BY PRODUCT_ID
+    </select>
+
+    <!-- choose/when: 인라인 동적 조건 -->
+    <select id="findByStatus" resultMap="productResultMap">
+        SELECT * FROM PRODUCTS
+        <where>
+            <choose>
+                <when test="status != null"> AND STATUS = #{status}</when>
+                <otherwise> AND STATUS = 'ACTIVE'</otherwise>
+            </choose>
+        </where>
+    </select>
+
+    <!-- foreach: 실제 파라미터는 collection(productIds), 루프변수(pid)는 제외 -->
+    <select id="findByIds" resultMap="productResultMap">
+        SELECT * FROM PRODUCTS WHERE PRODUCT_ID IN
+        <foreach collection="productIds" item="pid" open="(" separator="," close=")">
+            #{pid}
+        </foreach>
+    </select>
+
+    <!-- 단건 조회 -->
+    <select id="getProductById" parameterType="long" resultMap="productResultMap">
+        SELECT * FROM PRODUCTS WHERE PRODUCT_ID = #{productId}
+    </select>
+
+    <!-- 다중 #{} → Request DTO 자동생성 -->
+    <insert id="insertProduct">
+        INSERT INTO PRODUCTS (PRODUCT_NAME, CATEGORY, PRICE, STATUS)
+        VALUES (#{productName}, #{category}, #{price}, #{status})
+    </insert>
+
+</mapper>

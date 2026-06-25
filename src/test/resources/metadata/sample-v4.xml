@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+  <edmx:DataServices>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="Sample">
+
+      <EntityType Name="Product">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Name" Type="Edm.String"/>
+        <NavigationProperty Name="Category" Type="Sample.Category"/>
+      </EntityType>
+
+      <EntityType Name="Category">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Title" Type="Edm.String"/>
+      </EntityType>
+
+      <!-- bound action: Product 단건에 바인딩 -->
+      <Action Name="Activate" IsBound="true">
+        <Parameter Name="bindingParam" Type="Sample.Product"/>
+        <Parameter Name="reason" Type="Edm.String"/>
+      </Action>
+
+      <!-- bound action: Product 컬렉션에 바인딩 -->
+      <Action Name="DiscountAll" IsBound="true">
+        <Parameter Name="bindingParam" Type="Collection(Sample.Product)"/>
+        <Parameter Name="percent" Type="Edm.Int32"/>
+      </Action>
+
+      <!-- bound function: Product 단건 -->
+      <Function Name="GetRating" IsBound="true">
+        <Parameter Name="bindingParam" Type="Sample.Product"/>
+        <ReturnType Type="Edm.Int32"/>
+      </Function>
+
+      <!-- unbound action -->
+      <Action Name="ResetAll" IsBound="false"/>
+
+      <!-- unbound function -->
+      <Function Name="TopProducts" IsBound="false">
+        <Parameter Name="Count" Type="Edm.Int32"/>
+        <ReturnType Type="Collection(Sample.Product)"/>
+      </Function>
+
+      <EntityContainer Name="Container">
+        <EntitySet Name="Products" EntityType="Sample.Product">
+          <NavigationPropertyBinding Path="Category" Target="Categories"/>
+        </EntitySet>
+        <EntitySet Name="Categories" EntityType="Sample.Category"/>
+        <ActionImport Name="ResetAll" Action="Sample.ResetAll"/>
+        <FunctionImport Name="TopProducts" Function="Sample.TopProducts" IncludeInServiceDocument="true"/>
+      </EntityContainer>
+
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
