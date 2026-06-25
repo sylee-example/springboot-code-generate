@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,20 +34,20 @@ public class ODataGenerator {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1) {
-            System.err.println("사용법: genOData --args=\"<serviceUrl> [outputDir] [basePackage]\"");
+            System.err.println("사용법: genOData --args=\"<serviceUrl|metadataXmlFile> [outputDir] [basePackage]\"");
             System.exit(1);
         }
-        String serviceUrl = stripTrailingSlash(args[0]);
+        String source = args[0];
         Path outputDir = Path.of(args.length > 1 ? args[1] : "src/main/java");
         String basePackage = args.length > 2 ? args[2] : "com.example.odata.generated";
 
-        System.out.println("[genOData] metadata 조회: " + serviceUrl + "/$metadata");
-        Edm edm = readMetadata(serviceUrl);
+        Edm edm = readMetadata(source);
 
         GenConfig cfg = new GenConfig(basePackage, outputDir);
         DtoGenerator dtoGen = new DtoGenerator(cfg);
         ServiceGenerator serviceGen = new ServiceGenerator(cfg);
         ControllerGenerator controllerGen = new ControllerGenerator(cfg);
+        ODataPathGenerator pathGen = new ODataPathGenerator(cfg);
 
         Set<String> generatedDto = new HashSet<>();
 
@@ -84,22 +85,37 @@ public class ODataGenerator {
             System.out.println("  [CTRL] " + set.getEntityType().getName() + "Controller (" + set.getName() + ")");
         }
 
+        // 4) OData URL 경로 상수 (EntitySet/by-key/navigation + bound·unbound action·function)
+        pathGen.generate(edm);
+        System.out.println("  [PATH] ODataPaths");
+
         System.out.println("[genOData] 완료 → " + outputDir.resolve(basePackage.replace('.', '/')));
     }
 
-    private static Edm readMetadata(String serviceUrl) throws Exception {
-        HttpClient http = HttpClient.newHttpClient();
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(serviceUrl + "/$metadata"))
-                .header("Accept", "application/xml")
-                .GET()
-                .build();
-        HttpResponse<InputStream> resp = http.send(req, HttpResponse.BodyHandlers.ofInputStream());
-        if (resp.statusCode() != 200) {
-            throw new IllegalStateException("$metadata 조회 실패 HTTP " + resp.statusCode());
-        }
+    /** source 가 http(s):// 면 {@code {url}/$metadata} HTTP GET, 아니면 로컬 EDMX 파일로 읽는다. */
+    private static Edm readMetadata(String source) throws Exception {
         ODataClient client = ODataClientFactory.getClient();
-        try (InputStream in = resp.body()) {
+        if (source.startsWith("http://") || source.startsWith("https://")) {
+            String serviceUrl = stripTrailingSlash(source);
+            System.out.println("[genOData] metadata 조회: " + serviceUrl + "/$metadata");
+            HttpClient http = HttpClient.newHttpClient();
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(serviceUrl + "/$metadata"))
+                    .header("Accept", "application/xml")
+                    .GET()
+                    .build();
+            HttpResponse<InputStream> resp = http.send(req, HttpResponse.BodyHandlers.ofInputStream());
+            if (resp.statusCode() != 200) {
+                throw new IllegalStateException("$metadata 조회 실패 HTTP " + resp.statusCode());
+            }
+            try (InputStream in = resp.body()) {
+                return client.getReader().readMetadata(in);
+            }
+        }
+        // 로컬 EDMX 파일
+        Path file = Path.of(source);
+        System.out.println("[genOData] metadata 파일: " + file.toAbsolutePath());
+        try (InputStream in = Files.newInputStream(file)) {
             return client.getReader().readMetadata(in);
         }
     }

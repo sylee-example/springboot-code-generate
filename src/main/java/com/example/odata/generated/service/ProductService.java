@@ -1,37 +1,45 @@
 package com.example.odata.generated.service;
 
-import com.example.odata.generated.dto.ProductRequest;
+import com.example.odata.generated.dto.InsertProductRequest;
 import com.example.odata.generated.dto.ProductResponse;
-import com.example.odata.support.AbstractODataService;
-import com.example.odata.support.ODataCollection;
-import org.springframework.core.ParameterizedTypeReference;
+import com.example.odata.generated.dto.SearchProductsRequest;
+import com.example.odata.generated.mapper.ProductMapper;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Product OData Service — 생성 코드. CRUD 는 AbstractODataService 참고.
+ * Product Service — 생성 코드. Mapper 위임.
  */
 @Service
-public class ProductService extends AbstractODataService<ProductResponse, ProductRequest, Integer> {
-  private static final String ENTITY_SET = "Products";
+@RequiredArgsConstructor
+@Transactional(
+    readOnly = true
+)
+public class ProductService {
+  private final ProductMapper productMapper;
 
-  public ProductService(WebClient odataWebClient) {
-    super(odataWebClient);
+  public List<ProductResponse> searchProducts(SearchProductsRequest param) {
+    return productMapper.searchProducts(param);
   }
 
-  @Override
-  protected String entitySet() {
-    return ENTITY_SET;
+  public List<ProductResponse> findByStatus(String status) {
+    return productMapper.findByStatus(status);
   }
 
-  @Override
-  protected Class<ProductResponse> responseType() {
-    return ProductResponse.class;
+  public ProductResponse findByIds(String productIds) {
+    return productMapper.findByIds(productIds);
   }
 
-  @Override
-  protected ParameterizedTypeReference<ODataCollection<ProductResponse>> collectionType() {
-    return new ParameterizedTypeReference<ODataCollection<ProductResponse>>() {
-    };
+  public ProductResponse getProductById(Long productId) {
+    return productMapper.getProductById(productId);
+  }
+
+  @Transactional(
+      rollbackFor = Exception.class
+  )
+  public int insertProduct(InsertProductRequest param) {
+    return productMapper.insertProduct(param);
   }
 }

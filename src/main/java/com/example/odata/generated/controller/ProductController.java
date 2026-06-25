@@ -1,15 +1,14 @@
 package com.example.odata.generated.controller;
 
-import com.example.odata.generated.dto.ProductRequest;
+import com.example.odata.generated.dto.InsertProductRequest;
 import com.example.odata.generated.dto.ProductResponse;
+import com.example.odata.generated.dto.SearchProductsRequest;
 import com.example.odata.generated.service.ProductService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,36 +19,34 @@ import org.springframework.web.bind.annotation.RestController;
  * Product REST Controller — 생성 코드.
  */
 @RestController
-@RequestMapping("/api/Products")
+@RequestMapping("/api/product")
 @RequiredArgsConstructor
 public class ProductController {
   private final ProductService productService;
 
-  @GetMapping
-  public ResponseEntity<List<ProductResponse>> list(@RequestParam(required = false) String expand) {
-    return ResponseEntity.ok(productService.list(expand));
+  @GetMapping("/searchProducts")
+  public ResponseEntity<List<ProductResponse>> searchProducts(
+      @ModelAttribute SearchProductsRequest param) {
+    return ResponseEntity.ok(productService.searchProducts(param));
   }
 
-  @GetMapping("/{key}")
-  public ResponseEntity<ProductResponse> getByKey(@PathVariable Integer key,
-      @RequestParam(required = false) String expand) {
-    return ResponseEntity.ok(productService.getByKey(key, expand));
+  @GetMapping("/findByStatus")
+  public ResponseEntity<List<ProductResponse>> findByStatus(@RequestParam("status") String status) {
+    return ResponseEntity.ok(productService.findByStatus(status));
   }
 
-  @PostMapping
-  public ResponseEntity<ProductResponse> create(@RequestBody ProductRequest request) {
-    return ResponseEntity.ok(productService.create(request));
+  @GetMapping("/findByIds")
+  public ResponseEntity<ProductResponse> findByIds(@RequestParam("productIds") String productIds) {
+    return ResponseEntity.ok(productService.findByIds(productIds));
   }
 
-  @PatchMapping("/{key}")
-  public ResponseEntity<ProductResponse> update(@PathVariable Integer key,
-      @RequestBody ProductRequest request) {
-    return ResponseEntity.ok(productService.update(key, request));
+  @GetMapping("/getProductById")
+  public ResponseEntity<ProductResponse> getProductById(@RequestParam("productId") Long productId) {
+    return ResponseEntity.ok(productService.getProductById(productId));
   }
 
-  @DeleteMapping("/{key}")
-  public ResponseEntity<Void> delete(@PathVariable Integer key) {
-    productService.delete(key);
-    return ResponseEntity.noContent().build();
+  @PostMapping("/insertProduct")
+  public ResponseEntity<Integer> insertProduct(@RequestBody InsertProductRequest param) {
+    return ResponseEntity.ok(productService.insertProduct(param));
   }
 }
